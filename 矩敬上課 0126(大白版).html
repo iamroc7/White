@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+	<title></title>
+	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<link rel="stylesheet" href="https://js.arcgis.com/4.6/esri/css/main.css">
+  	<link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<script src="https://js.arcgis.com/4.6/"></script>
+	<script type="text/javascript">
+	$( function() {
+
+ 	 });
+//以下為ArcGIS地圖部分
+var map,view,_Glayer
+
+	require([
+	  "esri/Map",
+	  "esri/views/MapView",
+	  "esri/Graphic",
+	  "esri/layers/GraphicsLayer",
+	  "esri/geometry/Point",
+	  "esri/geometry/geometryEngine",
+	  "dojo/domReady!"
+	], function(Map, MapView,Graphic,GraphicsLayer,Point,geometryEngine) {
+		var handle = $( "#custom-handle" );
+    	$( "#slider" ).slider(
+    		{
+	    		min: 1,
+	    		max: 10,
+	    		animate: "slow",
+	    		create: function() {
+			     handle.text( $( this ).slider( "value" ) );
+			    },
+	    		slide: function(event,ui) {
+	    		 console.log(ui.value);
+	    		 handle.text( ui.value );
+	    		 locate();
+	    		},
+    		});
+		//以下為初始化地圖
+		map = new Map({
+		    basemap: "osm"
+		 });
+		view = new MapView({
+		    container: "viewDiv",  // Reference to the DOM node that will contain the view
+		    map: map,             // References the map object created in step 3
+		    center: [121.533297, 25.048085],
+    		zoom: 10,
+		  });
+		_Glayer = new GraphicsLayer();
+
+		//以上為初始化地圖
+		// 以下為地址填入獲得XY
+		//以下是視窗載入完成的起手式$(function(){})
+		$(function(){
+			//以下是組成點選多項目的地址的選擇，讀取如果有多個選項理的data-x跟data-y
+			$(document).on("click","#resultList .address",function(){
+				//document是選擇所有頁面，一旦點擊了#resultList 裡的address 就會執行下列動做
+				//寫成 var _this=$(this)的原因是this這個項目返回的會是類似字串，必須要將他加入$號變成JQUERY的物件
+				var _this=$(this);
+				console.log(this);
+				console.log(_this.data("x"),_this.data("y"));
+				_geometry= {"lat":_this.data("y") ,"lng":_this.data("x")};
+				locate();
+
+			});
+			//以上是組成點選多項目的地址的選擇			
+			$("#btnSearch").on("click",function(){
+				var _address=$("#query-input").val();
+				if(_address==""){
+					alert("蠢喔，沒填地址查屁阿!");
+					return;
+				}
+				var _url="https://maps.googleapis.com/maps/api/geocode/json?address="+_address+"&key=AIzaSyDvFT3eOvji9SXf6ckH0ODYXup6E2pprNw"
+
+				$.get(_url,function(data){
+					// console.log(data.results[0].geometry.location);
+					//以下判斷式為如果查詢結果筆數只有一筆就顯示經緯度 如果大於一筆就用迴圈組出列表
+					if(data.results.length==1){
+					_geometry={"lat":data.results[0].geometry.location.lat ,"lng":data.results[0].geometry.location.lng};
+					 locate();
+					 $("#resultList").css("display","none")
+					}else{
+						var _feature;
+						var _list=$("#resultList");
+					//先成立一個空的陣列當做容器，先將表頭加入 然後再用迴圈將各個地址及經緯度加入
+						var _html=[];
+						_html.push("<tr><th>#</th><td>哪個地址呢?</td></tr>")
+						for(var i=0;i<data.results.length;i++){
+							_feature=data.results[i]
+							_html.push("<tr><td>"+(i+1)+"</td><td><div data-x='"+data.results[i].geometry.location.lng+"' data-y='"+data.results[i].geometry.location.lat+"' class='address'</div>"+data.results[i].formatted_address+"</td></tr>");
+						}
+						_list.html("").append(_html.join(""));
+						$("#resultList").css("display","inline-block");
+
+					};
+			//以上為地址填入獲得XY
+				
+
+
+				});
+			});
+		});
+
+		//以下function為定位與顯示位置的工具
+		function locate(){
+			var _x,_y;
+				_x=_geometry.lng;
+				_y=_geometry.lat;
+			//以下為指定點的XY來源
+				var point= new Point({
+					type:"point",
+					latitude:_y,
+					longitude:_x,
+					});
+			//以上為指定點的XY來源
+			//以下為指定定位點的圖示			
+				var Pointmarker = {
+					type: "picture-marker",
+					url: "http://rawmilk.dk/frontend/images/9aab6af3.eclipse-icon.png",
+					width: 22,
+					height: 30
+					};
+			//以上為指定定位點的圖示
+			//以下將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
+			  	var pinpoint = new Graphic({
+    				geometry: point,   // Add the geometry created in step 4
+				    symbol: Pointmarker,   // Add the symbol created in step 5
+				  });
+			  	
+			//以上將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
+			//以下為顯示點的buffer範圍
+		 	var distance= $("#custom-handle").text()
+			var buffer = geometryEngine.geodesicBuffer(point, distance, "kilometers");
+			var bufferfill = {
+			    type: "simple-fill",
+			    outline: {
+			        style: "dot"
+			    }
+			};
+			var bufferArea = new Graphic(
+			{
+				geometry: buffer,   // Add the geometry created in step 4
+				symbol: bufferfill,   // Add the symbol created in step 5
+			});
+			_Glayer.removeAll();
+			_Glayer.addMany([pinpoint,bufferArea]);
+			map.add(_Glayer);
+			view.goTo({
+			  		target: bufferArea,
+			  		
+			  	},
+			  	{
+			  	 	duration: 3000	
+			  	});
+			//以上為顯示點的buffer範圍
+		};
+	});
+//找時間要把map跟button要拆開不同的function
+	</script>
+</head>
+<body>
+<div class="control-ui">
+	<div id="search-control-ui">
+        <p>請輸入查詢來執行地理編碼，或點擊地圖來執行反向地理編碼。</p>
+        <input id="query-input" autofocus="" value="中正路">
+        <input id="btnSearch" value="地理編碼" type="button">        
+     </div>
+     <table id="resultList" ></table>
+     <h3>請選擇你要的緩衝範圍半徑</h3>
+ 	 <div id="slider">
+ 	 	<div id="custom-handle" class="ui-slider-handle"></div>
+ 	 </div>
+ 	 
+</div>
+
+
+<div id="viewDiv"></div>
+
+</body>
+<style>
+  html, body, #viewDiv {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+  }
+  .control-ui{
+  	width: 30%;
+  	float:left;
+  }
+  #viewDiv{
+  	width:70%;
+  	float: right;
+  }
+  #search-control-ui{
+  	margin: 10px;
+  }
+  .address{
+  	cursor: pointer;
+  }
+  #slider{
+  	margin:15px;
+  }
+  #resultList{
+  	display: none;
+  }
+</style>
+</html>
+
+
+
+
