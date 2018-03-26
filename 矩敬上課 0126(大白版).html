@@ -22,8 +22,9 @@ var map,view,_Glayer
 	  "esri/layers/GraphicsLayer",
 	  "esri/geometry/Point",
 	  "esri/geometry/geometryEngine",
+	  "esri/layers/FeatureLayer",
 	  "dojo/domReady!"
-	], function(Map, MapView,Graphic,GraphicsLayer,Point,geometryEngine) {
+	], function(Map, MapView,Graphic,GraphicsLayer,Point,geometryEngine,FeatureLayer) {
 		var handle = $( "#custom-handle" );
     	$( "#slider" ).slider(
     		{
@@ -99,6 +100,43 @@ var map,view,_Glayer
 			//以上為地址填入獲得XY
 				});
 			});
+
+			var fl = new FeatureLayer({
+				  url: "http://services3.arcgis.com/1iEaN7ShrrAnHGzH/arcgis/rest/services/Real_Estate_Case/FeatureServer/0",
+				  id:"Real_Estate_Case_0"
+				});
+				fl.renderer = {
+				  type: "simple",  // autocasts as new SimpleRenderer()
+				  symbol: {
+				    type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
+				    size: 6,
+				    color: "black",
+				    outline: {  // autocasts as new SimpleLineSymbol()
+				      width: 0.5,
+				      color: "white"
+				    }
+				  }
+				};
+			var fl2 = new FeatureLayer({
+				  url: "http://services3.arcgis.com/1iEaN7ShrrAnHGzH/arcgis/rest/services/Real_Estate_Case/FeatureServer/1",
+				  id:"Real_Estate_Case_1"
+				});
+				//以下為圖層開關，給予html裡的button的class名稱:ToggleLayer，下面就是監聽畫面上ToggleLayer這個class名稱的button被點擊之後，去找尋被點擊那個按鈕的data-id，然後針對那個ID的對應塗層(ID:XXX)做圖層visible開關
+				$(document).on("click",".ToggleLayer",function(){
+				//document是選擇所有頁面，一旦點擊了#resultList 裡的address 就會執行下列動做
+				//寫成 var _this=$(this)的原因是this這個項目返回的會是類似字串，必須要將他加入$號變成JQUERY的物件
+					var _this=$(this);
+					console.log(this);
+					console.log(_this.data("id"));
+					var _bufferLayer=map.findLayerById(_this.data("id"))
+					if(_bufferLayer){
+						var _flag=_bufferLayer.visible;
+						_bufferLayer.visible=!_flag;
+					};
+				});
+				//以上為圖層開關
+			map.add(fl2);
+			map.add(fl);  // adds the layer to the map
 		});
 
 		//以下function為定位與顯示位置的工具
@@ -126,17 +164,20 @@ var map,view,_Glayer
     				geometry: point,   // Add the geometry created in step 4
 				    symbol: Pointmarker,   // Add the symbol created in step 5
 				  });
-			_Glayer.removeAll();
-			_Glayer.add(pinpoint)  	
-			//以上將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
-			view.goTo({
-			  		target: pinpoint,
-			  		zoom:18,			  		
-			  	},
-			  	{
-			  	 	duration: 3000,
+				var _bufferLayer=map.findLayerById("bufferLayer1")
+				if(_bufferLayer){
+					_bufferLayer.removeAll();
+					_bufferLayer.add(pinpoint)  	
+					//以上將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
+					view.goTo({
+					  		target: pinpoint,
+					  		zoom:18,			  		
+					  	},
+					  	{
+					  	 	duration: 3000,
 
-			  	});
+					  	});
+				};
 			$("#buffer").css("display","inline-block");
 		};
 		//以下function為繪製buffer範圍
@@ -182,8 +223,13 @@ var map,view,_Glayer
  	 <div id="slider">
  	 	<div id="custom-handle" class="ui-slider-handle"></div>
  	 </div>
+
  	 </div>
- 	 
+ 	  	<div>
+ 	 		<input type="button" value="緩衝範圍" class="ToggleLayer" data-id="bufferLayer1"></br>
+ 	 		<input type="button" value="台北市實價登錄_僅土地與建物_含建造年份_排除極值" class="ToggleLayer" data-id="Real_Estate_Case_0">
+ 	 		<input type="button" value="台北市各里房價" class="ToggleLayer" data-id="Real_Estate_Case_1">
+ 	 	</div>
 </div>
 
 
