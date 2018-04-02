@@ -6,9 +6,12 @@
 	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 	<link rel="stylesheet" href="https://js.arcgis.com/4.6/esri/css/main.css">
   	<link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  	<link rel="stylesheet" href="https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.0.0-rc.9/css/calcite-web.min.css">
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<script src="https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.0.0-rc.9/js/calcite-web.min.js"></script>
 	<script src="https://js.arcgis.com/4.6/"></script>
 	<script type="text/javascript">
+	// calcite.init()
 	$( function() {
 
  	 });
@@ -39,6 +42,7 @@ var map,view,_Glayer
 	    		 handle.text( ui.value );
 	    		 locate();
 	    		 drawbuffer();
+	    		 $(".LayerList").css("display","inline-block");
 	    		},
     		});
 		//以下為初始化地圖
@@ -103,7 +107,8 @@ var map,view,_Glayer
 
 			var fl = new FeatureLayer({
 				  url: "http://services3.arcgis.com/1iEaN7ShrrAnHGzH/arcgis/rest/services/Real_Estate_Case/FeatureServer/0",
-				  id:"Real_Estate_Case_0"
+				  id:"Real_Estate_Case_0",
+				  visible:false,
 				});
 				fl.renderer = {
 				  type: "simple",  // autocasts as new SimpleRenderer()
@@ -114,12 +119,14 @@ var map,view,_Glayer
 				    outline: {  // autocasts as new SimpleLineSymbol()
 				      width: 0.5,
 				      color: "white"
+
 				    }
 				  }
 				};
 			var fl2 = new FeatureLayer({
 				  url: "http://services3.arcgis.com/1iEaN7ShrrAnHGzH/arcgis/rest/services/Real_Estate_Case/FeatureServer/1",
-				  id:"Real_Estate_Case_1"
+				  id:"Real_Estate_Case_1",
+				  visible:false,
 				});
 				//以下為圖層開關，給予html裡的button的class名稱:ToggleLayer，下面就是監聽畫面上ToggleLayer這個class名稱的button被點擊之後，去找尋被點擊那個按鈕的data-id，然後針對那個ID的對應塗層(ID:XXX)做圖層visible開關
 				$(document).on("click",".ToggleLayer",function(){
@@ -212,25 +219,28 @@ var map,view,_Glayer
 	</script>
 </head>
 <body>
-<div class="control-ui">
-	<div id="search-control-ui">
-        <H1>Step1:請輸入查詢地址。</h1>
-        <input id="query-input" autofocus="" value="中正路">
-        <input id="btnSearch" value="地理編碼" type="button">        
-     </div>
-     <table id="resultList" ></table>
-     <div id="buffer"><h2>Step2:請選擇你要的分析範圍</h2>
- 	 <div id="slider">
- 	 	<div id="custom-handle" class="ui-slider-handle"></div>
- 	 </div>
-
- 	 </div>
- 	  	<div>
- 	 		<input type="button" value="緩衝範圍" class="ToggleLayer" data-id="bufferLayer1"></br>
- 	 		<input type="button" value="台北市實價登錄_僅土地與建物_含建造年份_排除極值" class="ToggleLayer" data-id="Real_Estate_Case_0">
- 	 		<input type="button" value="台北市各里房價" class="ToggleLayer" data-id="Real_Estate_Case_1">
- 	 	</div>
-</div>
+<div class="grid-container">
+    <!-- side navigation -->
+    <div class="column-5">
+      <aside class="side-nav">
+          <div id="search-control-ui">
+                  <H1>Step1:請輸入查詢地址。</h1>
+                  <input id="query-input" autofocus="" value="中正路">
+                  <input id="btnSearch" value="地理編碼" type="button">        
+          </div>
+              <table id="resultList" ></table>
+              <div id="buffer"><h2>Step2:請選擇你要的分析範圍</h2>
+                <div id="slider">
+                <div id="custom-handle" class="ui-slider-handle"></div>
+              </div>
+              <div class="LayerList">
+                <H2>Step3:圖層開關及選擇分析圖層</h2>
+                <div  class="ToggleLayer" data-id="bufferLayer1">緩衝範圍</div>
+                <div  class="ToggleLayer" data-id="Real_Estate_Case_0">台北市實價登錄_僅土地與建物_含建造年份_排除極值</div>
+                <div  class="ToggleLayer" data-id="Real_Estate_Case_1">台北市各里房價</div>
+              </div>
+      </aside>
+    </div>
 
 
 <div id="viewDiv"></div>
@@ -262,6 +272,12 @@ var map,view,_Glayer
   }
   #resultList,#buffer{
   	display: none;
+  }
+  .LayerList{
+  	display: none;
+  }
+  .ToggleLayer{
+  	cursor: pointer;
   }
 </style>
 </html>
