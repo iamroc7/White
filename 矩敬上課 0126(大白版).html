@@ -140,6 +140,8 @@ var map,view,_Glayer
 			map.add(fl2);
 			map.add(fl);
 			map.add(_Glayer); // adds the layer to the map
+			resultsLayer = new GraphicsLayer();
+			map.add(resultsLayer);
 		});
 
 		//以下function為定位與顯示位置的工具
@@ -188,7 +190,7 @@ var map,view,_Glayer
 			// if(typeof bufferArea!="undefined"){_Glayer.remove(bufferArea);}; 另一清除舊有buffer的方法
 		 	
 		 	var distance= $("#custom-handle").text()
-			var buffer = geometryEngine.geodesicBuffer(point, distance, "kilometers");
+			buffer = geometryEngine.geodesicBuffer(point, distance, "kilometers");
 			var bufferfill = {
 			    type: "simple-fill",
 			    outline: {
@@ -210,6 +212,34 @@ var map,view,_Glayer
 			  	});
 			//以上為顯示點的buffer範圍
 		};
+		 $(".query").on("click", function() {
+          queryEarthquakes()
+            .then(displayResults);
+        });
+		var layer=map.findLayerById("Real_Estate_Case_0");
+		if(layer){
+			function queryEarthquakes() {
+	  			var query = layer.createQuery();
+				  query.geometry = buffer;
+				  query.spatialRelationship = "intersects";
+				  return layer.queryFeatures(query);
+				};
+		};
+		
+		function displayResults(results) {
+			console.log(results.features.length);
+          resultsLayer.removeAll();
+          var features = results.features.map(function(graphic) {
+            graphic.symbol = {
+              type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+              style: "diamond",
+              size: 6.5,
+              color: "darkorange"
+            };
+            return graphic;
+          });
+          resultsLayer.addMany(features);
+        }
 	});
 //找時間要把map跟button要拆開不同的function
 	</script>
@@ -233,6 +263,7 @@ var map,view,_Glayer
  	 		<input type="button" value="台北市實價登錄_僅土地與建物_含建造年份_排除極值" class="ToggleLayer" data-id="Real_Estate_Case_0">
  	 		<input type="button" value="台北市各里房價" class="ToggleLayer" data-id="Real_Estate_Case_1">
  	 	</div>
+ 	 	<button class="query">點我</button>
 </div>
 
 
