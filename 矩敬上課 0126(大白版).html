@@ -39,6 +39,7 @@ var map,view,_Glayer
 	    		 handle.text( ui.value );
 	    		 locate();
 	    		 drawbuffer();
+	    		 $("#Layerlist").css("display","inline-block");
 	    		},
     		});
 		//以下為初始化地圖
@@ -212,36 +213,55 @@ var map,view,_Glayer
 			  	});
 			//以上為顯示點的buffer範圍
 		};
-		 $(".query").on("click", function() {
-          query()
-            .then(displayResults);
+		//以下為按下"點我"按鈕時開始茶與Buffer交集的點圖層和面圖層
+		// 點下按鍵的時候執行兩個functions，
+		// 1.對目標圖層建立一個QUERY進行查詢
+		// 2.將回傳結果加上一個graphic圖到地圖
+		 $(".query").on("click", function() {	 		
+          queryFL().then(displayResults);
         });
-		var layer=map.findLayerById("Real_Estate_Case_0");
-		if(layer){
-			function query() {
+		// 依據CheckBox的勾選狀態(Checked)來取得被勾選項目的value，並依此來找尋圖層的ID(value要跟ID一樣)
+		function queryFL() {
+			var _id=$(".layerGroup:checked").val();
+			console.log(_id);
+			var layer=map.findLayerById(_id);
+			if(layer){				//如果找到就建立一個查詢，條件是用geometry來交集(intersect)
 	  			var query = layer.createQuery();
 				  query.geometry = buffer;
 				  query.spatialRelationship = "intersects";
-				  return layer.queryFeatures(query);
+				  return layer.queryFeatures(query); 	//將查詢結果傳回
 				};
 		};
 		
 		function displayResults(results) {
-			console.log(results.features.length);
+			console.log(results.geometryType);
           resultsLayer.removeAll();
-          var features = results.features.map(function(graphic) {
-            graphic.symbol = {
+          var _symbol;
+          //判斷傳回的geometry type是啥
+          if(results.geometryType=="point"){
+          	  _symbol={
               type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
               style: "diamond",
               size: 6.5,
               color: "darkorange"
             };
+          }
+        
+        if(results.geometryType=="polygon"){
+          	  _symbol={
+              type: "simple-fill", // autocasts as new SimpleMarkerSymbol()
+            };
+          }
+
+
+          var features = results.features.map(function(graphic) {
+            graphic.symbol = _symbol;
             return graphic;
           });
-          resultsLayer.addMany(features);
+        resultsLayer.addMany(features);
         }
 	});
-//找時間要把map跟button要拆開不同的function
+	//以上為按下"點我"按鈕時開始茶與Buffer交集的點圖層和面圖層
 	</script>
 </head>
 <body>
@@ -256,14 +276,16 @@ var map,view,_Glayer
  	 <div id="slider">
  	 	<div id="custom-handle" class="ui-slider-handle"></div>
  	 </div>
-
  	 </div>
- 	  	<div>
+ 	  	<div id="Layerlist"><h2>Step3:請選擇你要的分析的圖層</h2>
  	 		<input type="button" value="緩衝範圍" class="ToggleLayer" data-id="bufferLayer1"></br>
- 	 		<input type="button" value="台北市實價登錄_僅土地與建物_含建造年份_排除極值" class="ToggleLayer" data-id="Real_Estate_Case_0">
- 	 		<input type="button" value="台北市各里房價" class="ToggleLayer" data-id="Real_Estate_Case_1">
+ 	 		<input type="radio" class="layerGroup" value="Real_Estate_Case_0" name="layerGroup" checked="checked">
+ 	 		<input type="button" value="台北市實價登錄_僅土地與建物_含建造年份_排除極值" class="ToggleLayer" data-id="Real_Estate_Case_0"></br>
+ 	 		<input type="radio" class="layerGroup" name="layerGroup" value="Real_Estate_Case_1">
+ 	 		<input type="button" value="台北市各里房價" class="ToggleLayer" data-id="Real_Estate_Case_1"></br>
+ 	 		<button class="query">點我進行選取</button>
  	 	</div>
- 	 	<button class="query">點我</button>
+ 	 	
 </div>
 
 
@@ -294,7 +316,7 @@ var map,view,_Glayer
   #slider{
   	margin:15px;
   }
-  #resultList,#buffer{
+  #resultList,#buffer,#Layerlist{
   	display: none;
   }
 </style>
