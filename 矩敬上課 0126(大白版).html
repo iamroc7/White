@@ -213,12 +213,12 @@ var map,view,_Glayer
 			//以上為顯示點的buffer範圍
 		};
 		 $(".query").on("click", function() {
-          queryEarthquakes()
+          query()
             .then(displayResults);
         });
 		var layer=map.findLayerById("Real_Estate_Case_0");
 		if(layer){
-			function queryEarthquakes() {
+			function query() {
 	  			var query = layer.createQuery();
 				  query.geometry = buffer;
 				  query.spatialRelationship = "intersects";
