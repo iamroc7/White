@@ -52,6 +52,32 @@ var map,view,_Glayer
 		    center: [121.533297, 25.048085],
     		zoom: 10,
 		  });
+		// Get the screen point from the view's click event
+		view.on("pointer-move", function (evt) {
+		 var screenPoint = {
+		   x: evt.x,
+		   y: evt.y
+		 };
+		 var point = view.toMap({x: evt.x, y: evt.y});
+		 // console.log(point); 
+		 // Search for graphics at the clicked location
+		 view.hitTest(screenPoint).then(function (response) {
+		  console.log(response.results);
+		  for (var i = 0; i < response.results.length; i++) {
+		  	if(response.results[i].graphic.layer.id=="resultsLayer"){
+		  		var _attr=response.results[i].graphic.attributes;
+		  		var _graphic=response.results[i].graphic.geometry;
+		  		var _content="<div>地址:"+_attr.土地區+"</div>"
+		  		view.popup.open({
+			   // Set the popup's title to the coordinates of the location
+			   title: "哈哈哈",
+			   location: _graphic, // Set the location of the popup to the clicked location
+			   content: _content  // content displayed in the popup
+			 });
+		  	};		  	
+		  };
+		 });
+		});
 		_Glayer = new GraphicsLayer({"id":"bufferLayer1"});
 		
 		//以上為初始化地圖
@@ -141,7 +167,7 @@ var map,view,_Glayer
 			map.add(fl2);
 			map.add(fl);
 			map.add(_Glayer); // adds the layer to the map
-			resultsLayer = new GraphicsLayer();
+			resultsLayer = new GraphicsLayer({"id":"resultsLayer"});
 			map.add(resultsLayer);
 		});
 
@@ -229,12 +255,13 @@ var map,view,_Glayer
 	  			var query = layer.createQuery();
 				  query.geometry = buffer;
 				  query.spatialRelationship = "intersects";
+				  query.outFields=["*"];
 				  return layer.queryFeatures(query); 	//將查詢結果傳回
 				};
 		};
 		
 		function displayResults(results) {
-			console.log(results.geometryType);
+			console.log(results);
           resultsLayer.removeAll();
           var _symbol;
           //判斷傳回的geometry type是啥
@@ -252,12 +279,23 @@ var map,view,_Glayer
               type: "simple-fill", // autocasts as new SimpleMarkerSymbol()
             };
           }
-
-
+          //以下為統計buffer的平均屋齡
+          var _sum=0
           var features = results.features.map(function(graphic) {
             graphic.symbol = _symbol;
+            var _attr=graphic.attributes;
+            _sum=_sum+_attr.Built_Year;
             return graphic;
           });
+          try{          
+          	var _avg= _sum/results.features.length+1911;
+          var dt= new Date();
+          var BuildingAge=dt.getFullYear()-Math.round(_avg);
+          console.log(BuildingAge);}
+          catch(e){
+          	console.log(e);
+          }
+          //以上為統計buffer的平均屋齡
         resultsLayer.addMany(features);
         }
 	});
