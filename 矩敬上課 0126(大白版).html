@@ -281,6 +281,8 @@ var map,view,_Glayer
           var _data=[];
           var _gAttr=[];
           var _sum=0,_builtAge=0,_currentYear=dt.getFullYear();
+
+
           var features = results.features.map(function(feature) { //.map就等於for迴圈
             feature.symbol = _symbol;
             var _attr=feature.attributes;
@@ -289,7 +291,7 @@ var map,view,_Glayer
             try{
             	_builtAge=_currentYear-(_attr.Built_Year+1911);
                _data.push([_attr.OBJECTID, _builtAge ]); //為何要放進去ObjectID?
-               console.log(_data);
+               //console.log(_data);
 	        }catch(e){
 	        	console.log(e);
 	        };
@@ -313,7 +315,51 @@ var map,view,_Glayer
 	});
 	//以上為按下"點我"按鈕時開始茶與Buffer交集的點圖層和面圖層
 
-function showChart(_data,_attr){
+function showChart(data,attr){
+	
+  var _series=[ ];
+var _district=[];
+
+//distinct district 
+for(var i=0;i<attr.length;i++){
+	if(_district.indexOf(attr[i]["鄉鎮市"]) ==-1){
+		_district.push(attr[i]["鄉鎮市"]); //attr[i].鄉鎮市
+	}
+}
+
+//_district=["aaa","bbb","ccc"]
+var _seriesData=[];
+var dt= new Date();
+var _currentYear=dt.getFullYear();
+
+//_seriesData.length	=_district.length;
+console.log(_seriesData);	
+try{
+	for(var j=0;j<_district.length;j++){
+		var _vals=[];
+		for(var i=0;i<attr.length;i++){
+		  if(_district[j]==attr[i]["鄉鎮市"]){
+		  	_builtAge=_currentYear-(attr[i].Built_Year+1911);
+	               
+		  	_vals.push([attr[i].單價_元/10000,_builtAge]);
+		  }
+		
+		}
+
+		_seriesData.push({
+	        name: _district[j],
+	        //color: 'rgba(119, 152, 191, .5)',
+	        data: _vals
+	    });
+	}
+}catch(e){
+		console.log(e);
+}
+
+console.log(_seriesData);
+
+//loop district  
+  
 
 Highcharts.chart('container', {
     chart: {
@@ -366,21 +412,20 @@ Highcharts.chart('container', {
                 }
             },
             tooltip: {
-                headerFormat: '<b>{series.name}</b><br>',
+                headerFormat: '',
                 pointFormat: '{point.x} cm, {point.y} kg'
                 ,pointFormatter:function(){
-						console.log(this.index,_attr[this.index]);
+                	var _attr=attr[this.index];
+					console.log(this.index,attr[this.index]);
+                	return '<b>'+ _attr.土地區 +'</b><br/>';
+						
 						//pointFormat
 
                 }
             }
         }
     },
-    series: [ {
-        name: 'aa',
-        color: 'rgba(119, 152, 191, .5)',
-        data: _data
-    }]
+    series: _seriesData
 });
 
 
