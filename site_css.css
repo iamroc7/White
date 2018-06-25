@@ -1,0 +1,26 @@
+  html, body, #viewDiv {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+  }
+  .control-ui{
+  	width: 30%;
+  	float:left;
+  }
+  #viewDiv{
+  	width:70%;
+  	float: right;
+  }
+  #search-control-ui{
+  	margin: 10px;
+  }
+  .address{
+  	cursor: pointer;
+  }
+  #slider{
+  	margin:15px;
+  }
+  #resultList,#buffer,#Layerlist{
+  	display: none;
+  }
