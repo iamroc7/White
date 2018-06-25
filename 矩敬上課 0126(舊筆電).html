@@ -81,7 +81,8 @@ var map,view,_Glayer
 		 });
 		//以上為取得螢幕上滑鼠hover的動作來做滑鼠移動的popup
 		});
-		_Glayer = new GraphicsLayer({"id":"bufferLayer1"});		
+		var _Glayer = new GraphicsLayer({"id":"bufferLayer1"});
+		var HGL = new GraphicsLayer({"id":"HGL"});		
 		//以上為初始化地圖
 		// 以下為地址填入獲得XY
 		//以下是視窗載入完成的起手式$(function(){})
@@ -168,6 +169,7 @@ var map,view,_Glayer
 			map.add(_Glayer); // adds the layer to the map
 			resultsLayer = new GraphicsLayer({"id":"resultsLayer"});
 			map.add(resultsLayer);
+			map.add(HGL);
 		});
 
 		//以下function為定位與顯示位置的工具
@@ -212,8 +214,7 @@ var map,view,_Glayer
 		};
 		//以下function為繪製buffer範圍
 		function drawbuffer(){
-			// if(typeof bufferArea!="undefined"){_Glayer.remove(bufferArea);}; 另一清除舊有buffer的方法
-		 	
+			// if(typeof bufferArea!="undefined"){_Glayer.remove(bufferArea);}; 另一清除舊有buffer的方法		 	
 		 	var distance= $("#custom-handle").text()
 			buffer = geometryEngine.geodesicBuffer(point, distance, "kilometers");
 			var bufferfill = {
@@ -310,6 +311,44 @@ var map,view,_Glayer
         }
 	});
 	//以上為按下"點我"按鈕時開始茶與Buffer交集的點圖層和面圖層
+	//以下function為顯示Hicart點選的那個點在地圖呈現
+		function highPoint(attr){
+			require([
+			  "esri/Graphic",
+			  "esri/geometry/Point"
+			], function(Graphic,Point) {
+				var _x,_y;
+				_x=attr.經度;
+				_y=attr.緯度;
+			//以下為指定點的XY來源
+				point= new Point({
+				type:"point",
+				latitude:_y,
+				longitude:_x,
+				});
+			//以上為指定點的XY來源
+			//以下為指定定位點的圖示			
+				var Pointmarker = {
+					type: "picture-marker",
+					url: "http://rawmilk.dk/frontend/images/9aab6af3.eclipse-icon.png",
+					width: 22,
+					height: 30
+					};
+			//以上為指定定位點的圖示
+			//以下將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
+			  	var pinpoint = new Graphic({
+    				geometry: point,   // Add the geometry created in step 4
+				    symbol: Pointmarker,   // Add the symbol created in step 5
+				  });
+				var _HGL=map.findLayerById("HGL")
+				if(_HGL){
+					_HGL.removeAll();
+					_HGL.add(pinpoint)  	
+					//以上將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
+				};
+			});
+		};
+		//以上function為顯示Hicart點選的那個點在地圖呈現
 //以下為HighChart的圖表依據不同區來做顯示，故需要將Buffer交集得到的資料組出Hichart所需要的"series"
 function showChart(data,attr){
 	var _series=[];//把放進hichart的data先定義他是名叫_series的陣列
@@ -334,7 +373,11 @@ function showChart(data,attr){
 			for (var i=0;i<attr.length;i++) { //這個迴圈是"如果找出前面組出來的鄉鎮裡對應到交集的feature的鄉鎮市，那就將交集回來的feature的單價跟屋齡推入_val這個陣列"
 				if (_district[j]==attr[i]["鄉鎮市"]) {
 					_builtAge=_currentYear-(attr[i].Built_Year+1911);
-					_vals.push([attr[i].單價_元/10000,_builtAge])
+					_vals.push({
+						x:attr[i].單價_元/10000,
+						y:_builtAge,
+						attr:attr[i],
+					});
 				};
 			};
 			_seriesData.push({
@@ -345,7 +388,6 @@ function showChart(data,attr){
 	}catch(e){
 		console.log(e);
 	}
-
 
 	//以上要將HighChart中的Series裡的Data(也就是要呈現的資料，在這裡是屋齡+單價)組出
 
@@ -402,12 +444,11 @@ Highcharts.chart('container', {
             },
             tooltip: {
                 headerFormat: '',
-                pointFormat: '{point.x} cm, {point.y} kg'
-                ,pointFormatter:function(){ //pointFormatter是HighChart的功能
-						var _attr=attr[this.index];
+                pointFormatter:function(){ //pointFormatter是HighChart的功能
+						var _attr=this.attr; //this是表格裡滑動過去的時候的那個點本身
 						console.log(this.index,attr[this.index]);
-                		return '<b>'+ _attr.土地區 +'</b><br/>';//滑鼠移過去的時候取得他再表格裡的index號碼，他跟attr(也就是上面_gAttr)的index順序一樣，就可以找到對應的objectID
-
+						highPoint(_attr);
+                		return '<b>'+ _attr.土地區 +'</b><br/>';//這是Highchart的一個功能組出表格裡的tooltip
                 }
             }
         }
