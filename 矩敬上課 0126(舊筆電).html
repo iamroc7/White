@@ -11,14 +11,42 @@
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<script src="https://js.arcgis.com/4.6/"></script>
 	<script src="site_map.js"></script>
+	<script type="text/javascript">
+		
+		$("#optionArea :radio").on("click",function(){
+		$(function)
+		var _this=$(this);
+		var _id=_this.data("id");
+		$("#addressArea,#xyArea").hide();
+		$("#"+id).show();
+		});
+		$("#optionArea :radio:checked").click();
+
+		$("#optionArea :radio").on("click",function(){
+
+		});
+	</script>
 </head>
 <body>
 <div class="control-ui">
 	<div id="search-control-ui">
-        <H1>Step1:請輸入查詢地址。</h1>
-        <input id="query-input" autofocus="" value="中正路">
-        <input id="btnSearch" value="地理編碼" type="button">        
-     </div>
+		<div id="optionArea">
+			<input type="radio" id="rbAddress" name="optionArea" data-id="addressArea" checked="">
+			<label for="rbAddress" style="cursor: pointer">address</label>
+			<input type="radio" id="rbXY" name="optionArea" data-id="xy">
+			<label for="rbXY" style="cursor: pointer">x,y</label>
+		</div>
+		<div id="addressArea">
+	        <H1>Step1:請輸入查詢地址</h1>
+	        <input id="query-input" autofocus="" value="中正路">
+	        <input id="btnSearch" value="地理編碼" type="button">	              
+     	</div>
+     	<div id="xyArea">
+	        <H1>Step1:請輸入經緯度XY</h1>
+	        <div>東經：<span style="color:red;">*</span>&nbsp;<input id="WGS84lng" type="text" style="width:150px;" value="121.5351444"></div>
+	        <div>北緯：<span style="color:red;">*</span>&nbsp;<input id="WGS84lat" type="text" style="width:150px;" value="121.5351444"></div><input type="button" id="btnPositXY" value="定位" style="margin-left:18px;">           
+     	</div>
+    </div> 	
      <table id="resultList" ></table>
      <div id="buffer"><h2>Step2:請選擇你要的分析範圍</h2>
  	 <div id="slider">
