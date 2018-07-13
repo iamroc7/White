@@ -22,17 +22,11 @@ var map,view,_Glayer
 	    		slide: function(event,ui) {
 	    		 console.log(ui.value);
 	    		 handle.text( ui.value );
+	    		 locate();
 	    		 drawbuffer();
 	    		 $("#Layerlist").css("display","inline-block");
 	    		},
     		});
-    	$("#btnPositXY").on("click",function(){
-			var _x,_y;
-			_x=$("#WGS84lng").val();
-			_y=$("#WGS84lat").val();
-			_geometry = { "lat": _y, "lng": _x };
-	        locate();
-		});	
 		//以下為初始化地圖
 		map = new Map({
 		    basemap: "streets-night-vector"
@@ -43,11 +37,6 @@ var map,view,_Glayer
 		    center: [121.533297, 25.048085],
     		zoom: 10,
 		  });
-		view.on("click", function(evt) {
-	     	var _point=evt.mapPoint;
-	     	_geometry = { "lat": _point.latitude, "lng": _point.longitude };
-	        locate();
-     	});
 		//以下為取得螢幕上滑鼠hover的動作來做滑鼠移動的popup
 		//以下為偵測螢幕上面滑鼠移動的螢幕XY
 		view.on("pointer-move", function (evt) {
@@ -170,7 +159,6 @@ var map,view,_Glayer
 
 		//以下function為定位與顯示位置的工具
 		function locate(){
-			resultsLayer.removeAll();
 			var _x,_y;
 				_x=_geometry.lng;
 				_y=_geometry.lat;
@@ -181,45 +169,37 @@ var map,view,_Glayer
 				longitude:_x,
 				});
 			//以上為指定點的XY來源
-			queryTaipeiCity(point).then(function(results){
-				if(results.features.length>0){
-				//以下為指定定位點的圖示			
-					var Pointmarker = {
-						type: "picture-marker",
-						url: "http://rawmilk.dk/frontend/images/9aab6af3.eclipse-icon.png",
-						width: 22,
-						height: 30
-						};
-				//以上為指定定位點的圖示
-				//以下將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
-				  	var pinpoint = new Graphic({
-	    				geometry: point,   // Add the geometry created in step 4
-					    symbol: Pointmarker,   // Add the symbol created in step 5
-					  });
-					var _bufferLayer=map.findLayerById("bufferLayer1")
-					if(_bufferLayer){
-						_bufferLayer.removeAll();
-						_bufferLayer.add(pinpoint)  	
-						//以上將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
-						view.goTo({
-						  		target: pinpoint,
-						  		zoom:18,			  		
-						  	},
-						  	{
-						  	 	duration: 3000,
-						  	});
+			//以下為指定定位點的圖示			
+				var Pointmarker = {
+					type: "picture-marker",
+					url: "http://rawmilk.dk/frontend/images/9aab6af3.eclipse-icon.png",
+					width: 22,
+					height: 30
+					};
+			//以上為指定定位點的圖示
+			//以下將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
+			  	var pinpoint = new Graphic({
+    				geometry: point,   // Add the geometry created in step 4
+				    symbol: Pointmarker,   // Add the symbol created in step 5
+				  });
+				var _bufferLayer=map.findLayerById("bufferLayer1")
+				if(_bufferLayer){
+					_bufferLayer.removeAll();
+					_bufferLayer.add(pinpoint)  	
+					//以上將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
+					view.goTo({
+					  		target: pinpoint,
+					  		zoom:18,			  		
+					  	},
+					  	{
+					  	 	duration: 3000,
+					  	});
 				};
 			$("#buffer").css("display","inline-block");
-				}else{
-					alert("目前不支援台北以外的地區喔");
-				}
-			});
-
 		};
 		//以下function為繪製buffer範圍
 		function drawbuffer(){
 			// if(typeof bufferArea!="undefined"){_Glayer.remove(bufferArea);}; 另一清除舊有buffer的方法		 	
-		 	resultsLayer.removeAll()
 		 	var distance= $("#custom-handle").text()
 			buffer = geometryEngine.geodesicBuffer(point, distance, "kilometers");
 			var bufferfill = {
@@ -233,30 +213,9 @@ var map,view,_Glayer
 				geometry: buffer,
 				symbol: bufferfill,
 			});
-			_Glayer.removeAll();
+			
 			_Glayer.add(bufferArea);
-			//以下為指定點的XY來源
-				point= new Point({
-				type:"point",
-				latitude:_geometry.lat,
-				longitude:_geometry.lng,
-				});
-			//以上為指定點的XY來源
-			//以下為指定定位點的圖示			
-				var Pointmarker = {
-					type: "picture-marker",
-					url: "http://rawmilk.dk/frontend/images/9aab6af3.eclipse-icon.png",
-					width: 22,
-					height: 30
-					};
-				//以上為指定定位點的圖示
-				//以下將點位跟圖示加入到Graphic中，將該Graphic加到地圖，並縮放到該地點
-			  	var pinpoint = new Graphic({
-					geometry: point,   // Add the geometry created in step 4
-				    symbol: Pointmarker,   // Add the symbol created in step 5
-				  });
-			  	_Glayer.add(pinpoint);
-				view.goTo({
+			view.goTo({
 			  		target:  bufferArea.geometry.extent.expand(1.3),//設定地圖範圍為緩衝範圍的extent並且擴張(expand)1.3倍			  		
 			  	},
 			  	{
@@ -279,18 +238,6 @@ var map,view,_Glayer
 			if(layer){				//如果找到就建立一個查詢，條件是用geometry來交集(intersect)
 	  			var query = layer.createQuery();
 				  query.geometry = buffer;
-				  query.spatialRelationship = "intersects";
-				  query.outFields=["*"];
-				  return layer.queryFeatures(query); 	//將查詢結果傳回
-				};
-		};
-
-		function queryTaipeiCity(_geometry) {
-			var _id="Real_Estate_Case_1";
-			var layer=map.findLayerById(_id);
-			if(layer){				//如果找到就建立一個查詢，條件是用geometry來交集(intersect)
-	  			var query = layer.createQuery();
-				  query.geometry = _geometry;
 				  query.spatialRelationship = "intersects";
 				  query.outFields=["*"];
 				  return layer.queryFeatures(query); 	//將查詢結果傳回
