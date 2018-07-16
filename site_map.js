@@ -1,4 +1,3 @@
-//以下為ArcGIS地圖部分
 var map,view,_Glayer
 	require([
 	  "esri/Map",
@@ -8,12 +7,14 @@ var map,view,_Glayer
 	  "esri/geometry/Point",
 	  "esri/geometry/geometryEngine",
 	  "esri/layers/FeatureLayer",
+	  "esri/widgets/LayerList",
 	  "dojo/domReady!"
-	], function(Map, MapView,Graphic,GraphicsLayer,Point,geometryEngine,FeatureLayer) {
+	], function(Map, MapView,Graphic,GraphicsLayer,Point,geometryEngine,FeatureLayer,LayerList) {
+
 		var handle = $( "#custom-handle" );
     	$( "#slider" ).slider(
     		{
-	    		min: 1,
+	    		min: 0,
 	    		max: 10,
 	    		animate: "slow",
 	    		create: function() {
@@ -43,6 +44,21 @@ var map,view,_Glayer
 		    center: [121.533297, 25.048085],
     		zoom: 10,
 		  });
+		const layerList = new LayerList({
+       		view: view,
+        	listItemCreatedFunction: function(event) {
+          	const item = event.item;
+          		item.panel = {
+           			content: "legend",
+            		open: false
+          		};
+        	}
+      	});
+      	console.log(layerList);
+      	$("#closeLayerlist").on("click",function(){
+			layerList.visible=true;
+		});
+		view.ui.add(layerList, "top-right" );
 		view.on("click", function(evt) {
 	     	var _point=evt.mapPoint;
 	     	_geometry = { "lat": _point.latitude, "lng": _point.longitude };
@@ -77,8 +93,14 @@ var map,view,_Glayer
 		 });
 		//以上為取得螢幕上滑鼠hover的動作來做滑鼠移動的popup
 		});
-		var _Glayer = new GraphicsLayer({"id":"bufferLayer1"});
-		var HGL = new GraphicsLayer({"id":"HGL"});		
+		var _Glayer = new GraphicsLayer({
+			id:"bufferLayer1",
+			listMode:"hide",
+		});
+		var HGL = new GraphicsLayer({
+			id:"HGL",
+			listMode:"hide",
+		});		
 		//以上為初始化地圖
 		// 以下為地址填入獲得XY
 		//以下是視窗載入完成的起手式$(function(){})
@@ -124,27 +146,68 @@ var map,view,_Glayer
 					});
 		});
 		//以上為地址填入獲得XY
+			const labelClass = { // autocasts as new LabelClass()
+		        symbol: {
+		          type: "text", // autocasts as new TextSymbol()
+		          color: "green",
+		          haloColor: "black",
+		          font: { // autocast as new Font()
+		            family: "playfair-display",
+		            size: 12,
+		            weight: "bold"
+		          }
+		        },
+		        labelPlacement: "above-center",
+		        labelExpressionInfo: {
+		          expression: "123"
+		        }
+		    };
 			var fl = new FeatureLayer({
 				  url: "http://services3.arcgis.com/1iEaN7ShrrAnHGzH/arcgis/rest/services/Real_Estate_Case/FeatureServer/0",
 				  id:"Real_Estate_Case_0",
 				  visible:false,
+				  labelingInfo: [labelClass],
+				  title:"實價登錄點位資料"
 				});
 				fl.renderer = {
-				  type: "simple",  // autocasts as new SimpleRenderer()
-				  symbol: {
-				    type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
-				    size: 6,
-				    color: "black",
-				    outline: {  // autocasts as new SimpleLineSymbol()
-				      width: 0.5,
-				      color: "white"
-				    }
-				  }
+				  	type: "simple",  // autocasts as new SimpleRenderer()
+				  	symbol: {
+					    type: "picture-marker",  // autocasts as new SimpleMarkerSymbol()
+					    url: "https://i.imgur.com/evQD3BC.png",
+						width: 32,
+						height: 32
+				  	},
+				  	visualVariables: [{
+				        type: "size",
+				        field: "單價_元",
+				        legendOptions: {
+				            title: "單價"
+				        },
+				        stops: [
+				          {
+				            value: 100000,
+				            size: 10,
+				            label: "<十萬"
+				          },
+				          {
+				            value: 500000,
+				            size: 15,
+				            label: "<五十萬"
+				          },
+				          {
+				            value: 900000,
+				            size: 25,
+				            label: "<九十萬"
+				          }
+				        ]
+		        	}]
 				};
+				console.log(fl);
 			var fl2 = new FeatureLayer({
 				  url: "http://services3.arcgis.com/1iEaN7ShrrAnHGzH/arcgis/rest/services/Real_Estate_Case/FeatureServer/1",
 				  id:"Real_Estate_Case_1",
 				  visible:false,
+				  title:"實價登錄各里資料"
 				});
 				//以下為圖層開關，給予html裡的button的class名稱:ToggleLayer，下面就是監聽畫面上ToggleLayer這個class名稱的button被點擊之後，去找尋被點擊那個按鈕的data-id，然後針對那個ID的對應塗層(ID:XXX)做圖層visible開關
 				$(document).on("click",".ToggleLayer",function(){
@@ -163,9 +226,13 @@ var map,view,_Glayer
 			map.add(fl2);
 			map.add(fl);
 			map.add(_Glayer); // adds the layer to the map
-			resultsLayer = new GraphicsLayer({"id":"resultsLayer"});
+			resultsLayer = new GraphicsLayer({
+				id:"resultsLayer",
+				title:"緩衝範圍"
+			});
 			map.add(resultsLayer);
 			map.add(HGL);
+			console.log(fl);
 		});
 
 		//以下function為定位與顯示位置的工具
@@ -303,12 +370,12 @@ var map,view,_Glayer
           //判斷傳回的geometry type是啥
           if(results.geometryType=="point"){
           	  _symbol={
-              type: "simple-marker",
-              style: "diamond",
-              size: 6.5,
-              color: "darkorange"
-            };
-          }
+				type: "picture-marker",
+				url: "https://static.arcgis.com/images/Symbols/Firefly/FireflyB8.png",
+				width: 22,
+				height: 30
+            	};
+          };
           if(results.geometryType=="polygon"){
           	  _symbol={
               type: "simple-fill",
@@ -319,12 +386,14 @@ var map,view,_Glayer
           var dt= new Date();
           var _data=[];
           var _gAttr=[];
-          var _sum=0,_builtAge=0,_currentYear=dt.getFullYear();
+          var _sum=0,_price=0,_builtAge=0,_currentYear=dt.getFullYear();
           var features = results.features.map(function(feature) { //.map就等於for迴圈
             feature.symbol = _symbol;
             var _attr=feature.attributes;
+            // console.log(_attr);
             _sum=_sum+_attr.Built_Year;//把交集到的點裡面的建造年分加總
             _gAttr.push(_attr);
+            _price=_price+_attr.單價_元;
             try{
             	_builtAge=_currentYear-(_attr.Built_Year+1911);
                _data.push([_attr.OBJECTID, _builtAge ]); //為何要放進去ObjectID?
@@ -334,9 +403,12 @@ var map,view,_Glayer
             return feature;
           });
           try{          
-          	  var _avg= _sum/results.features.length+1911;	//將所有的年份加總再除以撈到的筆數         
+          	  var _avg= _sum/results.features.length+1911;	//將所有的年份加總再除以撈到的筆數 
+          	  var _avgPrice=Math.round((_price/results.features.length/10000)*100)/100;   
 	          var BuildingAge=dt.getFullYear()-Math.round(_avg); //Math.round是四捨五入 getFullyear是取的現在年分
-	          alert("平均屋齡"+BuildingAge+"年");
+	          $("#statistic").css("display","block");
+	          $("#avgYear").empty().append("平均屋齡</br>"+BuildingAge);
+	          $("#avgPrice").empty().append("平均房價(萬元)</br>"+_avgPrice);
 	      }
           catch(e){
           	console.log(e);
@@ -442,7 +514,7 @@ Highcharts.chart('container', {
     xAxis: {
         title: {
             enabled: true,
-            text: 'Height (cm)'
+            text: '單價元(萬)'
         },
         startOnTick: true,
         endOnTick: true,
@@ -450,7 +522,7 @@ Highcharts.chart('container', {
     },
     yAxis: {
         title: {
-            text: 'Weight (kg)'
+            text: '屋齡(年)'
         }
     },
     legend: {
