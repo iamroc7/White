@@ -60,9 +60,12 @@ var map,view,_Glayer
 		});
 		view.ui.add(layerList, "top-right" );
 		view.on("click", function(evt) {
-	     	var _point=evt.mapPoint;
-	     	_geometry = { "lat": _point.latitude, "lng": _point.longitude };
-	        locate();
+			if(_mapClick== true){
+		     	var _point=evt.mapPoint;
+		     	_geometry = { "lat": _point.latitude, "lng": _point.longitude };
+		        locate();
+		        _mapClick=false;
+	        }
      	});
 		//以下為取得螢幕上滑鼠hover的動作來做滑鼠移動的popup
 		//以下為偵測螢幕上面滑鼠移動的螢幕XY
