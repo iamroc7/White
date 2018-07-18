@@ -8,8 +8,10 @@ var map,view,_Glayer
 	  "esri/geometry/geometryEngine",
 	  "esri/layers/FeatureLayer",
 	  "esri/widgets/LayerList",
+	  "esri/geometry/Extent",
+	  "esri/layers/VectorTileLayer",
 	  "dojo/domReady!"
-	], function(Map, MapView,Graphic,GraphicsLayer,Point,geometryEngine,FeatureLayer,LayerList) {
+	], function(Map, MapView,Graphic,GraphicsLayer,Point,geometryEngine,FeatureLayer,LayerList,Extent,VectorTileLayer) {
 
 		var handle = $( "#custom-handle" );
     	$( "#slider" ).slider(
@@ -35,14 +37,21 @@ var map,view,_Glayer
 	        locate();
 		});	
 		//以下為初始化地圖
+		var ext = new Extent({
+		  xmin: 121.2813538,
+		  ymin: 24.9501091,
+		  xmax: 121.8424658,
+		  ymax: 25.2213590,
+		});
 		map = new Map({
 		    basemap: "streets-night-vector"
 		 });
 		view = new MapView({
 		    container: "viewDiv",
 		    map: map,
-		    center: [121.533297, 25.048085],
-    		zoom: 10,
+		    // center: [121.533297, 25.048085],
+    		// zoom: 10,
+    		extent:ext
 		  });
 		const layerList = new LayerList({
        		view: view,
@@ -226,6 +235,11 @@ var map,view,_Glayer
 					};
 				});
 				//以上為圖層開關
+			var vtlLayer = new VectorTileLayer({
+			  // URL to the style of vector tiles
+			  url: "http://demo.igis.com.tw/server/rest/services/Hosted/Mask_Taipei_Erase/VectorTileServer/resources/styles/root.json"
+			});
+			map.add(vtlLayer);
 			map.add(fl2);
 			map.add(fl);
 			map.add(_Glayer); // adds the layer to the map

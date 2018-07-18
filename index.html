@@ -11,31 +11,32 @@
   	<link rel="stylesheet" href="https://esri.github.io/calcite-maps/dist/css/calcite-maps-bootstrap.min-v0.7.css">
   	<link rel="stylesheet" href="https://esri.github.io/calcite-maps/dist/css/calcite-maps-arcgis-4.x.min-v0.7.css">
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<script type="text/javascript">
+	   // var dojoConfig = {
+	   //   packages: [{
+	   //     name: "bootstrap",
+	   //     location: "https://esri.github.io/calcite-maps/dist/vendor/dojo-bootstrap"
+	   //   },
+	   //   {
+	   //     name: "calcite-maps",
+	   //     location: "https://esri.github.io/calcite-maps/dist/js/dojo"
+	   //  }]
+	   // };
+	    var dojoConfig = {
+	      has: {
+	        "esri-featurelayer-webgl": 0
+	      }
+	    };
+ 	</script>
 	<script src="https://js.arcgis.com/4.8/"></script>
 	<script src="site_map.js"></script>
 	<script src="site.js"></script>
 	<script type="text/javascript">
-	</script>
-	<script type="text/javascript">
-		$( function() { //@window.onload
+		$(function () { //@window.onload
 			formInit(); //@site.js
-	 	});
-	    var dojoConfig = {
-	      packages: [{
-	        name: "bootstrap",
-	        location: "https://esri.github.io/calcite-maps/dist/vendor/dojo-bootstrap"
-	      },
-	      {
-	        name: "calcite-maps",
-	        location: "https://esri.github.io/calcite-maps/dist/js/dojo"
-	      }]
-	    };
-	    var dojoConfig = {
-	      has: {
-	        "esri-featurelayer-webgl": 1
-	      }
-	    };
- 	</script>
+		});
+
+	</script>
 </head>
 <body class="calcite-maps calcite-nav-top">
 <nav class="navbar calcite-navbar navbar-fixed-top calcite-text-light calcite-bg-dark">
